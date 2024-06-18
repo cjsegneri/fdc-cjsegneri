@@ -32,6 +32,42 @@ def main() -> None:
     # check the category names for any mispellings
     print(np.sort(df_reference_categories["Fig Category 1"].unique()))
 
+    # filter dataset to requested columns
+    df_menu_items = df_menu_items[
+        [
+            "Store",
+            "Product Name",
+            "Product category",
+            "Ingredients on Product Page",
+            "Allergens and Warnings",
+            "URL of primary product picture",
+        ]
+    ].rename(
+        columns={
+            "Store": "Restaurant",
+            "Product Name": "Menu Item",
+            "Product category": "Restaurant Category",
+            "Ingredients on Product Page": "Ingredients",
+            "Allergens and Warnings": "Allergens",
+            "URL of primary product picture": "Picture URL",
+        }
+    )
+
+    # join to the dataset in the second excel sheet to get the fig category
+    df_reference_categories = df_reference_categories.rename(
+        columns={
+            "Restaurant name": "Restaurant",
+            "Restaurant original category": "Restaurant Category",
+        }
+    )
+    df_final = pd.merge(
+        df_menu_items,
+        df_reference_categories,
+        how="left",
+        on=["Restaurant", "Restaurant Category"],
+    )
+    df_final.info()
+
 
 if __name__ == "__main__":
     main()
