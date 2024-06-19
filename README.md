@@ -44,3 +44,25 @@ or:
 ```bash
 make pre-commit
 ```
+
+## Script Execution
+
+Create a new file in the root directory called `CONFIG_MYSQL.json` that contains the following information:
+
+```json
+{
+    "username": ""
+    ,"password": ""
+    ,"host": ""
+    ,"port": ""
+    ,"database": ""
+}
+```
+
+Fill out json keys in `CONFIG_MYSQL.json` in order to connect to a database that contains the tables displayed in the `FigERD.png` file.
+
+Run the following to execute the Python script which reads data/restaurant_data.xlsx, cleans the data, normalizes the data, and inserts it into the database tables:
+
+```
+make run-main
+```

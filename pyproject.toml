@@ -7,6 +7,13 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.11"
+pandas = "^2.2.2"
+openpyxl = "^3.1.4"
+spellchecker = "^0.4"
+pyspellchecker = "^0.8.1"
+mysql-connector-python = "^8.4.0"
+sqlalchemy = "^2.0.31"
+mysqlclient = "^2.2.4"
 
 
 [tool.poetry.group.dev.dependencies]

@@ -9,3 +9,9 @@ __pycache__/
 
 # Python stuff
 .DS_Store
+
+# Opened document
+data/.~lock.restaurant_data.xlsx#
+
+# MySQL config
+CONFIG_MYSQL.json

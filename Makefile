@@ -1,8 +1,8 @@
 lint:
-	poetry run flake8 src/ tests/
+	poetry run flake8 src/
 
 run-main:
-	poetry run python src/main.py
+	poetry run python src/fig_data_challenge/main.py
 
 setup:
 	poetry install
