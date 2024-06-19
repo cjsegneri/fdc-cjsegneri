@@ -1,6 +1,29 @@
+import json
+
 import numpy as np
 import pandas as pd
 from sqlalchemy import create_engine
+
+
+def return_42() -> int:
+    return 42
+
+
+def drop_rows_blank_or_null(df: pd.DataFrame, cols: list[str]) -> pd.DataFrame:
+    for col in cols:
+        df.loc[:, col] = df[col].replace("", np.nan)
+        df = df.dropna(subset=col)
+
+    return df
+
+
+def correct_mispellings(
+    df: pd.DataFrame, col: str, corrections: dict[str, str]
+) -> pd.DataFrame:
+    for k, v in corrections.items():
+        df.loc[df[col] == k, col] = v
+
+    return df
 
 
 def main() -> None:
@@ -13,25 +36,34 @@ def main() -> None:
     )
 
     # drop rows where blank or null
-    print(df_menu_items.shape)
-    df_menu_items["Product Name"] = df_menu_items["Product Name"].replace("", np.nan)
-    df_menu_items["Ingredients on Product Page"] = df_menu_items[
-        "Ingredients on Product Page"
-    ].replace("", np.nan)
-    df_menu_items["Store"] = df_menu_items["Store"].replace("", np.nan)
-    df_menu_items = df_menu_items.dropna(
-        subset=["Product Name", "Ingredients on Product Page", "Store"]
+    print(
+        "df_menu_items shape prior to removing blanks and nulls - "
+        + str(df_menu_items.shape)
     )
-    print(df_menu_items.shape)
+    df_menu_items = drop_rows_blank_or_null(
+        df=df_menu_items, cols=["Product Name", "Ingredients on Product Page", "Store"]
+    )
+    print(
+        "df_menu_items shape after to removing blanks and nulls - "
+        + str(df_menu_items.shape)
+        + "\n\n"
+    )
 
     # check the store names for any mispellings
+    print("unique store names:")
     print(np.sort(df_menu_items["Store"].unique()))
-    # correct the mispellings
-    df_menu_items.loc[df_menu_items["Store"] == "MacDonald's", "Store"] = "McDonald’s"
-    print(np.sort(df_menu_items["Store"].unique()))
-
+    print("\n")
     # check the category names for any mispellings
+    print("unique fig category names:")
     print(np.sort(df_reference_categories["Fig Category 1"].unique()))
+    print("\n")
+    # correct the mispellings
+    df_menu_items = correct_mispellings(
+        df=df_menu_items, col="Store", corrections={"MacDonald's": "McDonald’s"}
+    )
+    print("unique store names after correcting mispelling:")
+    print(np.sort(df_menu_items["Store"].unique()))
+    print("\n")
 
     # filter dataset to requested columns
     df_menu_items = df_menu_items[
@@ -70,7 +102,15 @@ def main() -> None:
     df_final.info()
 
     # connect to local MySQL database
-    engine = create_engine("mysql+mysqldb://root:root@localhost:3306/fig", echo=False)
+    CONFIG_MYSQL = json.load(open("CONFIG_MYSQL.json", "r"))
+    engine = create_engine(
+        "mysql+mysqldb://"
+        + CONFIG_MYSQL["username"]
+        + ":"
+        + CONFIG_MYSQL["password"]
+        + "@localhost:3306/fig",
+        echo=False,
+    )
 
     # insert into MySQL fig_category table
     df_fig_category = pd.DataFrame(
@@ -78,14 +118,6 @@ def main() -> None:
     ).dropna()
     df_fig_category.to_sql(
         con=engine, name="fig_category", if_exists="append", index=False
-    )
-
-    # insert into MySQL menu_category table
-    df_menu_category = pd.DataFrame(
-        df_final["Restaurant Category"].unique(), columns=["name"]
-    ).dropna()
-    df_menu_category.to_sql(
-        con=engine, name="menu_category", if_exists="append", index=False
     )
 
     # insert into MySQL restaurant table
@@ -97,19 +129,12 @@ def main() -> None:
     # get the information back from the MySQL tables
     # in order to retrieve the auto incremented ids
     df_fig_category_with_ids = pd.read_sql("SELECT * FROM fig_category", con=engine)
-    df_menu_category_with_ids = pd.read_sql("SELECT * FROM menu_category", con=engine)
     df_restaurant_with_ids = pd.read_sql("SELECT * FROM restaurant", con=engine)
     df_final = pd.merge(
         df_final,
         df_fig_category_with_ids.rename(columns={"name": "Fig Category 1"}),
         how="left",
         on="Fig Category 1",
-    )
-    df_final = pd.merge(
-        df_final,
-        df_menu_category_with_ids.rename(columns={"name": "Restaurant Category"}),
-        how="left",
-        on="Restaurant Category",
     )
     df_final = pd.merge(
         df_final,
@@ -126,7 +151,6 @@ def main() -> None:
             "Allergens",
             "Picture URL",
             "restaurant_id",
-            "menu_category_id",
             "fig_category_id",
         ]
     ].rename(

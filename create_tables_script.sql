@@ -9,13 +9,6 @@ CREATE TABLE fig_category (
 );
 -- select * from fig_category;
 
-CREATE TABLE menu_category (
-	menu_category_id INT NOT NULL AUTO_INCREMENT,
-    name VARCHAR(250),
-	PRIMARY KEY (menu_category_id)
-);
--- select * from menu_category;
-
 CREATE TABLE restaurant (
 	restaurant_id INT NOT NULL AUTO_INCREMENT,
     name VARCHAR(250),
@@ -26,15 +19,13 @@ CREATE TABLE restaurant (
 CREATE TABLE menu_item (
 	menu_item_id INT NOT NULL AUTO_INCREMENT,
     name VARCHAR(250),
-    ingredients VARCHAR(10000),
-    allergens VARCHAR(1000),
-    picture_url VARCHAR(10000),
+    ingredients TEXT,
+    allergens TEXT,
+    picture_url TEXT,
     restaurant_id INT,
-    menu_category_id INT,
     fig_category_id INT,
 	PRIMARY KEY (menu_item_id),
     FOREIGN KEY (restaurant_id) REFERENCES restaurant(restaurant_id),
-    FOREIGN KEY (menu_category_id) REFERENCES menu_category(menu_category_id),
     FOREIGN KEY (fig_category_id) REFERENCES fig_category(fig_category_id)
 );
 -- select * from menu_item;
