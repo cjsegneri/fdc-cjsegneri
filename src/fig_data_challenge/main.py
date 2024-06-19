@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from sqlalchemy import create_engine
 
 
 def main() -> None:
@@ -67,6 +68,76 @@ def main() -> None:
         on=["Restaurant", "Restaurant Category"],
     )
     df_final.info()
+
+    # connect to local MySQL database
+    engine = create_engine("mysql+mysqldb://root:root@localhost:3306/fig", echo=False)
+
+    # insert into MySQL fig_category table
+    df_fig_category = pd.DataFrame(
+        df_final["Fig Category 1"].unique(), columns=["name"]
+    ).dropna()
+    df_fig_category.to_sql(
+        con=engine, name="fig_category", if_exists="append", index=False
+    )
+
+    # insert into MySQL menu_category table
+    df_menu_category = pd.DataFrame(
+        df_final["Restaurant Category"].unique(), columns=["name"]
+    ).dropna()
+    df_menu_category.to_sql(
+        con=engine, name="menu_category", if_exists="append", index=False
+    )
+
+    # insert into MySQL restaurant table
+    df_restaurant = pd.DataFrame(
+        df_final["Restaurant"].unique(), columns=["name"]
+    ).dropna()
+    df_restaurant.to_sql(con=engine, name="restaurant", if_exists="append", index=False)
+
+    # get the information back from the MySQL tables
+    # in order to retrieve the auto incremented ids
+    df_fig_category_with_ids = pd.read_sql("SELECT * FROM fig_category", con=engine)
+    df_menu_category_with_ids = pd.read_sql("SELECT * FROM menu_category", con=engine)
+    df_restaurant_with_ids = pd.read_sql("SELECT * FROM restaurant", con=engine)
+    df_final = pd.merge(
+        df_final,
+        df_fig_category_with_ids.rename(columns={"name": "Fig Category 1"}),
+        how="left",
+        on="Fig Category 1",
+    )
+    df_final = pd.merge(
+        df_final,
+        df_menu_category_with_ids.rename(columns={"name": "Restaurant Category"}),
+        how="left",
+        on="Restaurant Category",
+    )
+    df_final = pd.merge(
+        df_final,
+        df_restaurant_with_ids.rename(columns={"name": "Restaurant"}),
+        how="left",
+        on="Restaurant",
+    )
+
+    # insert into MySQL menu_item table
+    df_final = df_final[
+        [
+            "Menu Item",
+            "Ingredients",
+            "Allergens",
+            "Picture URL",
+            "restaurant_id",
+            "menu_category_id",
+            "fig_category_id",
+        ]
+    ].rename(
+        columns={
+            "Menu Item": "name",
+            "Ingredients": "ingredients",
+            "Allergens": "allergens",
+            "Picture URL": "picture_url",
+        }
+    )
+    df_final.to_sql(con=engine, name="menu_item", if_exists="append", index=False)
 
 
 if __name__ == "__main__":
