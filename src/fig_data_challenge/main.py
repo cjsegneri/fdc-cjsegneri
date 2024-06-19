@@ -108,7 +108,12 @@ def main() -> None:
         + CONFIG_MYSQL["username"]
         + ":"
         + CONFIG_MYSQL["password"]
-        + "@localhost:3306/fig",
+        + "@"
+        + CONFIG_MYSQL["host"]
+        + ":"
+        + CONFIG_MYSQL["port"]
+        + "/"
+        + CONFIG_MYSQL["database"],
         echo=False,
     )
 
